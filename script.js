@@ -1,42 +1,90 @@
-const apiKey = "3e3b2093a482cb508ff412d608a61b3c"; // Your OpenWeatherMap API Key
-const searchBtn = document.getElementById("searchBtn");
-const cityInput = document.getElementById("cityInput");
-const errorMsg = document.getElementById("errorMsg");
+const mapContainer = $("#map-container");
+let countryP = $(".country");
+let idP = $(".temp_c");
+let latP = $("#lat");
+let lonP = $("#lon");
+let nameP = $(".name");
+let regionP = $(".region");
+let urlP = $(".url");
+let humidity = $(".humidity");
+let tz_id = $(".tz_id");
+let wind_kph = $(".wind_kph");
+let img = document.getElementById("weatherIcon");
+const apiKey = "4a758dd1aed04dc3950175920231609";
 
-searchBtn.addEventListener("click", () => {
-    const city = cityInput.value.trim();
-    if (city === "") {
-        errorMsg.textContent = "Please enter a city name!";
-        return;
+var map = L.map('map').setView([0, 0], 13);
+
+var marker;
+
+getLocation();
+
+// Dark Mode
+function darkMode() {
+  var element = document.body;
+  element.classList.toggle("dark-mode");
+}
+
+// Geolocation and Weather Data
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(showPosition);
+  } else {
+    alert("Geolocation is not supported by this browser.");
+  }
+}
+function showPosition(position) {
+  const latitude = position.coords.latitude;
+  const longitude = position.coords.longitude;
+  fetchWeatherData(latitude + "," + longitude);
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+
+  marker = L.marker([latitude, longitude]).addTo(map);
+  marker.setLatLng([latitude, longitude]).update();
+  map.setView([latitude, longitude]);
+}
+
+// Handle Weather Search
+function handleSearch() {
+  const location = document.getElementById("location-input").value;
+  fetchWeatherData(location);
+}
+document.getElementById("search-button").addEventListener("click", handleSearch);
+
+// Fetch Weather Data
+function fetchWeatherData(location) {
+  $.ajax({
+    method: "GET",
+    url: `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${location}`,
+    success: ({ location, current }) => {
+      countryP.text(location.country);
+      idP.text(current.temp_c.toLocaleString(undefined, { style: "unit", unit: "celsius" }));
+      latP.text(location.lat);
+      lonP.text(location.lon);
+      nameP.text(location.name);
+      regionP.text(location.region);
+      urlP.text(current.condition.text);
+      humidity.text(current.humidity);
+      tz_id.text(location.tz_id);
+      wind_kph.text(current.wind_kph + "kph");
+      img.src = current.condition.icon;
+
+      marker.setLatLng([location.lat, location.lon]).update();
+      map.setView([location.lat, location.lon]);
     }
-
-    fetchWeather(city);
-});
-
-function fetchWeather(city) {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
-
-    fetch(url)
-        .then(response => {
-            if (!response.ok) throw new Error("City not found");
-            return response.json();
-        })
-        .then(data => updateUI(data))
-        .catch(error => {
-            errorMsg.textContent = error.message;
-        });
+  });
 }
 
-function updateUI(data) {
-    errorMsg.textContent = "";
-
-    document.getElementById("cityName").textContent = data.name;
-    document.getElementById("temperature").textContent = `${Math.round(data.main.temp)}°C`;
-    document.getElementById("weatherCondition").textContent = data.weather[0].description;
-    document.getElementById("weatherIcon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
-
-    document.getElementById("windSpeed").textContent = `${data.wind.speed} km/h`;
-    document.getElementById("humidity").textContent = `${data.main.humidity}%`;
-    document.getElementById("pressure").textContent = `${data.main.pressure} mb`;
-    document.getElementById("rainChance").textContent = data.clouds.all ? `${data.clouds.all}%` : "0%";
+// Update Local Time
+function updateLocalTime() {
+  const localTimeElement = document.getElementById("local-time");
+  const now = new Date();
+  const localTimeString = now.toLocaleTimeString();
+  localTimeElement.textContent = `${localTimeString}`;
 }
+
+updateLocalTime();
+setInterval(updateLocalTime, 1000);
