@@ -8,7 +8,6 @@ This is a weather application that allows users to check the current weather bas
 - **Location Search**: Users can search for any location and view its weather data.
 - **Weather Details**: Displays temperature, humidity, wind speed, condition, and more.
 - **Interactive Map**: Shows the location on an interactive map using Leaflet.js.
-- **Dark Mode**: A dark mode toggle to switch between light and dark themes.
 - **Location Suggestions**: As the user types in the search bar, location suggestions are displayed.
 
 ## Tech Stack
